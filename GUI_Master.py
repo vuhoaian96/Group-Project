@@ -239,21 +239,52 @@ class ConnGUI():
         if self.distance or self.force or self.time:
             pass
 
-    def AddFrame(self):
+    def animate(self, x, y):
         
+        if self.force_distance.get() == 1:
+            self.graph.clear()  # Clear the previous plot
+            self.graph.set_xlabel('Distance (mm)')
+            self.graph.set_ylabel('Force (N)')
+            self.graph.set_title('Force vs Distance')
+            self.graph.plot(x, y, color='blue')
+            self.graph_canvas.draw()
+
+        elif self.force_time.get() == 1:
+            self.graph.clear()  # Clear the previous plot
+            self.graph.set_xlabel('Time (s)')
+            self.graph.set_ylabel('Force (N)')
+            self.graph.set_title('Force vs Time')
+            self.graph.plot(x, y, color='blue')
+            self.graph_canvas.draw()
+
+        elif self.distance_time.get() == 1:
+            self.graph.clear()  # Clear the previous plot
+            self.graph.set_xlabel('Time (s)')
+            self.graph.set_ylabel('Distance (mm)')
+            self.graph.set_title('Distance vs Time')
+            self.graph.plot(x, y, color='blue')
+            self.graph_canvas.draw()
+
+    def AddFrame(self):
         self.frame_graph = LabelFrame(self.root, text="Display Manager", padx=5, pady=5, bg="white")
         self.frame_graph.grid(padx=5, column=0, row=25, columnspan=9, sticky=NW)
         self.root.geometry("1200x600")
 
-        # self.fig, self.data = plt.subplots(1, 1, figsize=(5,7)) #The first one is fig, second on are axis
+        self.fig = plt.Figure(figsize=(7, 5), dpi=70)
+        self.graph = self.fig.add_subplot(111)  # Create subplot once
 
-        fig = plt.Figure(figsize=(7, 5), dpi=70)
-        fig.add_subplot(111) # return a subplot inside
+        self.graph.set_xlabel('Distance (mm)')
+        self.graph.set_ylabel('Force 👎')
+        self.graph.set_title('Force vs Distance')
 
-        print(type(fig))
+        self.graph.plot([], [], color='blue')  # Plot empty data initially
 
-        self.graph = FigureCanvasTkAgg(fig, master=self.frame_graph)
-        self.graph.get_tk_widget().grid(column=0, row=0, rowspan=17, columnspan=4, sticky=N)
+        self.graph_canvas = FigureCanvasTkAgg(self.fig, master=self.frame_graph)
+        self.graph_canvas.draw()
+        self.graph_canvas.get_tk_widget().pack()
+
+        self.toolbar = NavigationToolbar2Tk(self.graph_canvas, self.frame_graph)
+        self.toolbar.update()
         
     
 
@@ -265,7 +296,7 @@ class ConnGUI():
         with open("Result.csv","w",newline='') as f: #appends data into file
             self.writer=csv.writer(f,delimiter=",")
             self.writer.writerow(['Force','Distance','Time'])
-            rows=zip(self.serial.force, self.serial.distance, self.time) #allows you to save data into columns in csv file
+            rows=zip(self.force, self.distance, self.time) #allows you to save data into columns in csv file
             for row in rows:
                 self.writer.writerow(row) #writes data into csv file
 

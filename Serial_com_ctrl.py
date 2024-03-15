@@ -88,14 +88,15 @@ class SerialCtrl():
                     gui.distance.append(b) #add incoming distance data into array
                     gui.force.append(a)
                     gui.time.append(c)
-                    print(gui.distance)
+                    print(f"Force: {a}, Distance: {b}, Time: {c}")
+                    gui.animate(gui.distance, gui.force)
 
 
-                    # init a thread to plot the data
-                    gui.data.plot(gui.distance, gui.force, color='blue')
-                    gui.data.draw_artist(gui.data.bbox)
-                    gui.fig.canvas.blit(gui.data.bbox)
-                    gui.fig.canvas.flush_events()
+                    # # init a thread to plot the data
+                    # gui.data.plot(gui.distance, gui.force, color='blue')
+                    # gui.data.draw_artist(gui.data.bbox)
+                    # gui.fig.canvas.blit(gui.data.bbox)
+                    # gui.fig.canvas.flush_events()
 
         
                     
