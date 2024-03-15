@@ -11,6 +11,9 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
                                                NavigationToolbar2Tk)
 from drawnow import drawnow, figure
 
+global frame_exist
+frame_exist = False
+
 class RootGUI():
     def __init__(self):
         '''Initializing the root GUI and other comps of the program'''
@@ -137,6 +140,9 @@ class ComGui():
                messagebox.showerror("showerror", ErrorMsg)
                
         else:
+            global frame_exist
+            frame_exist = False
+            self.serial_thread = threading.Thread(target=self.serial.stop_read, daemon=False)
             self.conn.ConnGUIClose()
             #closing the connection
             self.serial.SerialClose()
@@ -147,8 +153,11 @@ class ComGui():
             self.btn_refresh["state"] ="active"
             self.drop_baud["state"] = "active"
             self.drop_com["state"] = "active"
+            self.time = []
+            self.force = []
+            self.distance = []
 
-class ConnGUI():
+class ConnGUI(ComGui):
     def __init__(self,root,serial):
         self.root = root
         self.serial= serial
@@ -182,7 +191,7 @@ class ConnGUI():
         #streaming
         self.streaming = Label(self.frame, text ="Streaming", bg ="white", width = 20, anchor="w")
         self.btn_start_stream = Button(self.frame, text="Start", state="active", width=5, command=self.start_stream)
-        self.btn_stop_stream = Button(self.frame, text="Stop", state="active", width=5, command=self.stop_stream)
+        self.btn_stop_stream = Button(self.frame, text="Pause", state="active", width=5, command=self.toggle_stream)
 
         #save option
         self.save = False
@@ -231,22 +240,36 @@ class ConnGUI():
         self.root.geometry("360x120")
 
     def start_stream(self):
-        self.AddFrame()
-
-        self.serial_thread = threading.Thread(target=self.serial.read_serial,args= (self,), daemon= True)
+        global frame_exist
+        if frame_exist == False:
+            self.AddFrame()
+            frame_exist = True
+        self.serial_thread = threading.Thread(target=self.serial.read_serial,args= (self,), daemon=False)
         self.serial_thread.start()
-
+        print("Starting the stream")
         if self.distance or self.force or self.time:
             pass
 
-    def animate(self, x, y):
+    def toggle_stream(self):
+        if self.btn_stop_stream["text"] in "Pause":
+            print("Pausing the stream")
+            self.stop_stream()
+            print("Paused")
+            self.btn_stop_stream["text"] = "Resume"
+        else:
+            print("Resuming the stream")
+            self.start_stream()
+            print("Resumed")
+            self.btn_stop_stream["text"] = "Pause"
+
+    def animate(self, distance, force, time):
         
         if self.force_distance.get() == 1:
             self.graph.clear()  # Clear the previous plot
             self.graph.set_xlabel('Distance (mm)')
             self.graph.set_ylabel('Force (N)')
             self.graph.set_title('Force vs Distance')
-            self.graph.plot(x, y, color='blue')
+            self.graph.plot(distance, force, color='blue')
             self.graph_canvas.draw()
 
         elif self.force_time.get() == 1:
@@ -254,7 +277,7 @@ class ConnGUI():
             self.graph.set_xlabel('Time (s)')
             self.graph.set_ylabel('Force (N)')
             self.graph.set_title('Force vs Time')
-            self.graph.plot(x, y, color='blue')
+            self.graph.plot(time, force, color='blue')
             self.graph_canvas.draw()
 
         elif self.distance_time.get() == 1:
@@ -262,11 +285,11 @@ class ConnGUI():
             self.graph.set_xlabel('Time (s)')
             self.graph.set_ylabel('Distance (mm)')
             self.graph.set_title('Distance vs Time')
-            self.graph.plot(x, y, color='blue')
+            self.graph.plot(time, distance, color='blue')
             self.graph_canvas.draw()
 
     def AddFrame(self):
-        self.frame_graph = LabelFrame(self.root, text="Display Manager", padx=5, pady=5, bg="white")
+        self.frame_graph = LabelFrame(self.frame, text="Display Manager", padx=5, pady=5, bg="white")
         self.frame_graph.grid(padx=5, column=0, row=25, columnspan=9, sticky=NW)
         self.root.geometry("1200x600")
 
@@ -285,8 +308,6 @@ class ConnGUI():
 
         self.toolbar = NavigationToolbar2Tk(self.graph_canvas, self.frame_graph)
         self.toolbar.update()
-        
-    
 
     
     def stop_stream(self):

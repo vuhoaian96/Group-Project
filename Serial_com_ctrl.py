@@ -32,9 +32,9 @@ class SerialCtrl():
             port = self.foundports[i]
             strPort = str(port)
             
-            if 'Arduino' in strPort: 
-                splitPort = strPort.split(' ')
-                self.commPorts = splitPort[0]
+            # if 'Arduino' in strPort: 
+            splitPort = strPort.split(' ')
+            self.commPorts = splitPort[0]
 
         return self.commPorts
     
@@ -82,42 +82,27 @@ class SerialCtrl():
                 
                 if gui.received_data:
                     data = gui.received_data.split(',')
-                    a=float(data[0]) #force data
-                    b=float(data[1]) #distance data
-                    c=float(data [2]) #time
+                    a = data[0]
+                    b = data[1]
+                    c = data[2]
                     gui.distance.append(b) #add incoming distance data into array
                     gui.force.append(a)
                     gui.time.append(c)
                     print(f"Force: {a}, Distance: {b}, Time: {c}")
-                    gui.animate(gui.distance, gui.force)
+                    gui.animate(gui.distance, gui.force, gui.time)
 
-
-                    # # init a thread to plot the data
-                    # gui.data.plot(gui.distance, gui.force, color='blue')
-                    # gui.data.draw_artist(gui.data.bbox)
-                    # gui.fig.canvas.blit(gui.data.bbox)
-                    # gui.fig.canvas.flush_events()
-
-        
-                    
-                    # line, = gui.data.plot(gui.distance, np.zeros(len(gui.distance)), color='blue')
-                    # line.set_ydata(gui.distance)
-                    # gui.data.draw_artist(line)
-
-                    # gui.fig.canvas.blit(gui.data.bbox)
-                    # gui.fig.canvas.flush_events()
                 
                 if self.threading == False:
-                    break 
+                    break
             except Exception as e:
-                print(f"Error reading serial data: {e}")
-            if self.threading == False:
-                break   
-    
+                print(f"Error reading serial data: {e}")      
 
 
     def stop_read(self):
-        self.ser.write(b'e')
+        self.threading = False
+
+    def playback(self):
+        self.threading = True
 
     def ClearData(self):
         self.force = []
