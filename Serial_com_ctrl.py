@@ -14,8 +14,10 @@ class SerialCtrl():
         self.connect_list = []
         self.foundports = []
         self.sync_cnt = 200
-        
         self.force_distance = 0
+        self.speed = ""
+        self.loop = ""
+        self.lim_dis =""
 
 
     def getCOMList(self):
@@ -32,9 +34,9 @@ class SerialCtrl():
             port = self.foundports[i]
             strPort = str(port)
             
-            # if 'Arduino' in strPort: 
-            splitPort = strPort.split(' ')
-            self.commPorts = splitPort[0]
+            if 'Arduino' in strPort: 
+                splitPort = strPort.split(' ')
+                self.commPorts = splitPort[0]
 
         return self.commPorts
     
@@ -71,6 +73,15 @@ class SerialCtrl():
         except: 
             self.ser.status = False
 
+    def send_to_motor(self):
+        if self.ser.is_open:
+            speed = float(self.speed)
+            if speed == int:
+                print(speed)
+            else:
+                print ("error")
+        #self.ser.write()
+
     def read_serial(self,gui):
         self.threading = True
         self.ser.write(b's')
@@ -103,11 +114,11 @@ class SerialCtrl():
 
     def playback(self):
         self.threading = True
+    
+    def sending_stop(self):
+        self.ser.write(b'e')
+        self.threading = False
 
-    def ClearData(self):
-        self.force = []
-        self.distance = []
-        self.time = []
 
 if __name__ == "__main__":
     SerialCtrl()
