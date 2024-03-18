@@ -180,12 +180,12 @@ class ConnGUI(ComGui):
         #stepper motor input
         self.motor_label = Label(self.frame, text ="Motor Input", bg ="white", width = 20, anchor="w")
         self.motor_speed = Label(self.frame, text="Motor speed:", bg = "white", width = 15, anchor="w")
-        self.motor_speed_entry = Entry(self.frame, text = "", bg = "white", width =15, textvariable=self.serial.speed)
+        self.motor_speed_entry = Entry(self.frame, text = "", bg = "white", width =15) #, textvariable=self.serial.speed
         self.motor_distance = Label(self.frame, text= "Distance:",bg = "white", width = 15, anchor="w")
-        self.motor_distance_entry = Entry(self.frame, text = "", bg = "white", width =15, textvariable= self.loop_value)
+        self.motor_distance_entry = Entry(self.frame, text = "", bg = "white", width =15) #, textvariable=self.serial.distance
         self.motor_loop = Label(self.frame, bg = "white", text = "Loop number:", width = 15, anchor="w")
         self.motor_loop_entry = Entry(self.frame, text = "", bg = "white", width =15, textvariable= self.distance_value)
-        self.send_to_motor = Button(self.frame, text="Send", state = "active", width=5, command=self.serial.send_to_motor)
+        self.send_to_motor = Button(self.frame, text="Send", state = "active", width=5, command=self.send_to_motor)
         
         #chart management
         self.Graph_managment = Label(self.frame, text ="Graph Management", bg ="white", width = 20, anchor="w")
@@ -211,6 +211,10 @@ class ConnGUI(ComGui):
 
 
         self.ConnGUIOpen()
+
+    def send_to_motor(self):
+        field = [self.motor_speed_entry.get(), self.motor_distance_entry.get(), self.motor_loop_entry.get()]
+        self.serial.send_to_motor(field)
     
 
     def ConnGUIOpen(self):
