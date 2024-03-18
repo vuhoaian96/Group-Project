@@ -142,11 +142,11 @@ class ComGui():
         else:
             global frame_exist
             frame_exist = False
-            self.serial_thread = threading.Thread(target=self.serial.stop_read, daemon=False)
+            self.serial.sending_stop()
+            #self.conn.serial_thread.join()
             self.conn.ConnGUIClose()
             #closing the connection
             self.serial.SerialClose()
-            self.serial.ClearData()
             InfoMSg= f"Connection using {self.clicked_com.get()} is now closed"
             messagebox.showinfo("showinfo", InfoMSg)
             self.btn_connect["text"] = "Connect"
@@ -156,7 +156,8 @@ class ComGui():
             self.time = []
             self.force = []
             self.distance = []
-
+            
+    
 class ConnGUI(ComGui):
     def __init__(self,root,serial):
         self.root = root
@@ -164,7 +165,13 @@ class ConnGUI(ComGui):
         self.force = []
         self.distance = []
         self.time = []
+    
         self.received_data = ""
+        
+        self.speed_value = StringVar()
+        self.loop_value = StringVar()
+        self.distance_value = StringVar()
+        
         self.frame = LabelFrame(root, text="Input Manager", padx= 5, pady = 5, bg='white',width = 80)
         
         #synchronization
@@ -173,11 +180,12 @@ class ConnGUI(ComGui):
         #stepper motor input
         self.motor_label = Label(self.frame, text ="Motor Input", bg ="white", width = 20, anchor="w")
         self.motor_speed = Label(self.frame, text="Motor speed:", bg = "white", width = 15, anchor="w")
-        self.motor_speed_entry = Entry(self.frame, text = "", bg = "white", width =15)
+        self.motor_speed_entry = Entry(self.frame, text = "", bg = "white", width =15) #, textvariable=self.serial.speed
         self.motor_distance = Label(self.frame, text= "Distance:",bg = "white", width = 15, anchor="w")
-        self.motor_distance_entry = Entry(self.frame, text = "", bg = "white", width =15)
+        self.motor_distance_entry = Entry(self.frame, text = "", bg = "white", width =15) #, textvariable=self.serial.distance
         self.motor_loop = Label(self.frame, bg = "white", text = "Loop number:", width = 15, anchor="w")
-        self.motor_loop_entry = Entry(self.frame, text = "", bg = "white", width =15)
+        self.motor_loop_entry = Entry(self.frame, text = "", bg = "white", width =15, textvariable= self.distance_value)
+        self.send_to_motor = Button(self.frame, text="Send", state = "active", width=5, command=self.send_to_motor)
         
         #chart management
         self.Graph_managment = Label(self.frame, text ="Graph Management", bg ="white", width = 20, anchor="w")
@@ -191,12 +199,11 @@ class ConnGUI(ComGui):
         #streaming
         self.streaming = Label(self.frame, text ="Streaming", bg ="white", width = 20, anchor="w")
         self.btn_start_stream = Button(self.frame, text="Start", state="active", width=5, command=self.start_stream)
-        self.btn_stop_stream = Button(self.frame, text="Pause", state="active", width=5, command=self.toggle_stream)
+        self.btn_pause_stream = Button(self.frame, text="Pause", state="active", width=5, command=self.toggle_stream)
 
         #save option
         self.save = False
-        self.SaveVar= IntVar()
-        self.save_check = Checkbutton(self.frame, text="Save data", variable = self.SaveVar, onvalue =1, offvalue =0, bg="white", state = "active", command=self.save_data)
+        self.save_check = Button(self.frame, text="Save data", bg="white", state = "active", command=self.save_data)
 
         self.separator = ttk.Separator(self.frame, orient = 'vertical')
         self.pady = 5
@@ -204,6 +211,10 @@ class ConnGUI(ComGui):
 
 
         self.ConnGUIOpen()
+
+    def send_to_motor(self):
+        field = [self.motor_speed_entry.get(), self.motor_distance_entry.get(), self.motor_loop_entry.get()]
+        self.serial.send_to_motor(field)
     
 
     def ConnGUIOpen(self):
@@ -217,6 +228,7 @@ class ConnGUI(ComGui):
         self.motor_distance_entry.grid(column=2, row = 3)
         self.motor_loop.grid(column=1, row=4, pady = self.pady)
         self.motor_loop_entry.grid(column=2, row=4)
+        self.send_to_motor.grid(column=2, row=5, pady = self.pady)
 
         self.ConnManager.grid(column=3, row=1, padx=self.padx, pady=self.pady)
 
@@ -227,9 +239,9 @@ class ConnGUI(ComGui):
 
         self.streaming.grid(column= 3, row =4, padx=self.padx, pady = self.pady)
         self.btn_start_stream.grid(column=3, row =5, padx=self.padx, pady = self.pady)
-        self.btn_stop_stream.grid(column = 4, row =5)
+        self.btn_pause_stream.grid(column = 4, row =5)
 
-        self.save_check.grid(column=4, row = 4, padx = self.padx, pady = self.pady)
+        self.save_check.grid(column=5, row = 5, padx = 30, pady = self.pady)
         self.separator.place(relx = 0.36, rely = 0, relwidth=0.001, relheight=1)
 
 
@@ -239,11 +251,19 @@ class ConnGUI(ComGui):
         self.frame.destroy()
         self.root.geometry("360x120")
 
+    def EntryMotro(self):
+        if "" in self.speed.value.get() or "" in self.loop_value.get() or "" in self.distance_value.get():
+            self.send_to_motor["state"] ="disable"
+        else:
+            self.send_to_motor["state"] = "active"
+
+
     def start_stream(self):
         global frame_exist
         if frame_exist == False:
             self.AddFrame()
             frame_exist = True
+        self.btn_start_stream["state"] = "disable"
         self.serial_thread = threading.Thread(target=self.serial.read_serial,args= (self,), daemon=False)
         self.serial_thread.start()
         print("Starting the stream")
@@ -251,16 +271,18 @@ class ConnGUI(ComGui):
             pass
 
     def toggle_stream(self):
-        if self.btn_stop_stream["text"] in "Pause":
+        if self.btn_pause_stream["text"] in "Pause":
             print("Pausing the stream")
             self.stop_stream()
             print("Paused")
-            self.btn_stop_stream["text"] = "Resume"
+            self.btn_pause_stream["text"] = "Resume"
+            self.save_check["state"]= "active"
         else:
             print("Resuming the stream")
             self.start_stream()
             print("Resumed")
-            self.btn_stop_stream["text"] = "Pause"
+            self.btn_pause_stream["text"] = "Pause"
+            self.save_check["state"]= "disable"
 
     def animate(self, distance, force, time):
         
@@ -297,7 +319,7 @@ class ConnGUI(ComGui):
         self.graph = self.fig.add_subplot(111)  # Create subplot once
 
         self.graph.set_xlabel('Distance (mm)')
-        self.graph.set_ylabel('Force 👎')
+        self.graph.set_ylabel('Force (N)')
         self.graph.set_title('Force vs Distance')
 
         self.graph.plot([], [], color='blue')  # Plot empty data initially

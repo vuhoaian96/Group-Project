@@ -14,9 +14,8 @@ class SerialCtrl():
         self.connect_list = []
         self.foundports = []
         self.sync_cnt = 200
-        
         self.force_distance = 0
-
+        self.motor_data = ""
 
     def getCOMList(self):
         ports = serial.tools.list_ports.comports()
@@ -32,7 +31,7 @@ class SerialCtrl():
             port = self.foundports[i]
             strPort = str(port)
             
-            # if 'Arduino' in strPort: 
+            # if 'Arduino' in strPort:
             splitPort = strPort.split(' ')
             self.commPorts = splitPort[0]
 
@@ -71,6 +70,16 @@ class SerialCtrl():
         except: 
             self.ser.status = False
 
+    def send_to_motor(self, field):
+        if self.ser.is_open:
+            print("sending to motor")
+            data = ','.join(map(str, field))
+            print(data)     #----------> data sẽ có định dạng như sau: "1,2,3"
+            # gửi data cho arduino
+            self.ser.write(data.encode())
+        else:
+            print("Serial port not open")
+
     def read_serial(self,gui):
         self.threading = True
         self.ser.write(b's')
@@ -103,11 +112,11 @@ class SerialCtrl():
 
     def playback(self):
         self.threading = True
+    
+    def sending_stop(self):
+        self.ser.write(b'e')
+        self.threading = False
 
-    def ClearData(self):
-        self.force = []
-        self.distance = []
-        self.time = []
 
 if __name__ == "__main__":
     SerialCtrl()
