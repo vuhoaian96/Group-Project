@@ -181,11 +181,13 @@ class ConnGUI(ComGui):
         self.motor_label = Label(self.frame, text ="Motor Input", bg ="white", width = 20, anchor="w")
         self.motor_speed = Label(self.frame, text="Motor speed:", bg = "white", width = 15, anchor="w")
         self.motor_speed_entry = Entry(self.frame, text = "", bg = "white", width =15) #, textvariable=self.serial.speed
-        self.motor_distance = Label(self.frame, text= "Distance:",bg = "white", width = 15, anchor="w")
-        self.motor_distance_entry = Entry(self.frame, text = "", bg = "white", width =15) #, textvariable=self.serial.distance
+        self.motor_maxdistance = Label(self.frame, text= "Max distance:",bg = "white", width = 15, anchor="w")
+        self.motor_maxdistance_entry = Entry(self.frame, text = "", bg = "white", width =15) #, textvariable=self.serial.distance
+        self.motor_mindistance = Label(self.frame, text= "Min distance:",bg = "white", width = 15, anchor="w")
+        self.motor_mindistance_entry = Entry(self.frame, text = "", bg = "white", width =15) 
         self.motor_loop = Label(self.frame, bg = "white", text = "Loop number:", width = 15, anchor="w")
         self.motor_loop_entry = Entry(self.frame, text = "", bg = "white", width =15, textvariable= self.distance_value)
-        self.send_to_motor = Button(self.frame, text="Send", state = "active", width=5, command=self.send_to_motor)
+        self.btn_send = Button(self.frame, text="Send", state = "active", width=5, command=self.send_to_motor)
         
         #chart management
         self.Graph_managment = Label(self.frame, text ="Graph Management", bg ="white", width = 20, anchor="w")
@@ -213,7 +215,7 @@ class ConnGUI(ComGui):
         self.ConnGUIOpen()
 
     def send_to_motor(self):
-        field = [self.motor_speed_entry.get(), self.motor_distance_entry.get(), self.motor_loop_entry.get()]
+        field = [self.motor_loop_entry.get(), self.motor_maxdistance_entry.get(),self.motor_mindistance_entry.get() , self.motor_speed_entry.get()]
         self.serial.send_to_motor(field)
     
 
@@ -224,11 +226,13 @@ class ConnGUI(ComGui):
         self.motor_label.grid(column=1, row=1, pady=self.pady)
         self.motor_speed.grid(column=1, row=2)
         self.motor_speed_entry.grid(column =2, row =2, pady=self.pady)
-        self.motor_distance.grid(column=1, row = 3, pady = self.pady)
-        self.motor_distance_entry.grid(column=2, row = 3)
-        self.motor_loop.grid(column=1, row=4, pady = self.pady)
-        self.motor_loop_entry.grid(column=2, row=4)
-        self.send_to_motor.grid(column=2, row=5, pady = self.pady)
+        self.motor_maxdistance.grid(column=1, row = 3, pady = self.pady)
+        self.motor_maxdistance_entry.grid(column=2, row = 3)
+        self.motor_mindistance.grid(column=1, row = 4, pady = self.pady)
+        self.motor_mindistance_entry.grid(column=2, row = 4)
+        self.motor_loop.grid(column=1, row=5, pady = self.pady)
+        self.motor_loop_entry.grid(column=2, row=5)
+        self.btn_send.grid(column=2, row=6, pady = self.pady)
 
         self.ConnManager.grid(column=3, row=1, padx=self.padx, pady=self.pady)
 
@@ -253,9 +257,9 @@ class ConnGUI(ComGui):
 
     def EntryMotro(self):
         if "" in self.speed.value.get() or "" in self.loop_value.get() or "" in self.distance_value.get():
-            self.send_to_motor["state"] ="disable"
+            self.btn_send["state"] ="disable"
         else:
-            self.send_to_motor["state"] = "active"
+            self.btn_send["state"] = "active"
 
 
     def start_stream(self):
@@ -263,10 +267,10 @@ class ConnGUI(ComGui):
         if frame_exist == False:
             self.AddFrame()
             frame_exist = True
-        self.btn_start_stream["state"] = "disable"
-        self.serial_thread = threading.Thread(target=self.serial.read_serial,args= (self,), daemon=False)
-        self.serial_thread.start()
-        print("Starting the stream")
+        # self.btn_start_stream["state"] = "disable"
+            self.serial_thread = threading.Thread(target=self.serial.read_serial,args= (self,), daemon=False)
+            self.serial_thread.start()
+            print("Starting the stream")    
         if self.distance or self.force or self.time:
             pass
 
@@ -298,6 +302,8 @@ class ConnGUI(ComGui):
             self.graph.clear()  # Clear the previous plot
             self.graph.set_xlabel('Time (s)')
             self.graph.set_ylabel('Force (N)')
+            # set fixed y-axis on the graph
+            self.graph.text(0, 0, 'Force (N)', fontsize=12, ha='center')
             self.graph.set_title('Force vs Time')
             self.graph.plot(time, force, color='blue')
             self.graph_canvas.draw()

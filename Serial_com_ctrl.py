@@ -99,7 +99,12 @@ class SerialCtrl():
                     gui.time.append(c)
                     print(f"Force: {a}, Distance: {b}, Time: {c}")
                     gui.animate(gui.distance, gui.force, gui.time)
-
+                    '''
+                    if data=='e':
+                        self.threading = False
+                        print("End cycle")
+                        break
+                        '''
                 
                 if self.threading == False:
                     break
