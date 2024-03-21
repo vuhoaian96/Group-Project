@@ -146,8 +146,6 @@ class ComGui():
             #self.conn.serial_thread.join()
             self.conn.ConnGUIClose()
             #closing the connection
-            self.serial.ser.write(b'e')
-            self.serial.ser.close()
             self.serial.SerialClose()
             InfoMSg= f"Connection using {self.clicked_com.get()} is now closed"
             messagebox.showinfo("showinfo", InfoMSg)
@@ -270,10 +268,10 @@ class ConnGUI(ComGui):
         if frame_exist == False:
             self.AddFrame()
             frame_exist = True
-        # self.btn_start_stream["state"] = "disable"
-            self.serial_thread = threading.Thread(target=self.serial.read_serial,args= (self,), daemon=False)
-            self.serial_thread.start()
-            print("Starting the stream")    
+        self.btn_start_stream["state"] = "disable"
+        self.serial_thread = threading.Thread(target=self.serial.read_serial,args= (self,), daemon=False)
+        self.serial_thread.start()
+        print("Starting the stream")
         if self.distance or self.force or self.time:
             pass
 
@@ -292,27 +290,23 @@ class ConnGUI(ComGui):
             self.save_check["state"]= "disable"
 
     def animate(self, distance, force, time):
-        
-        if self.force_distance.get() == 1:
+        if self.force_distance.get() == 1 and self.force_time.get() == 0 and self.distance_time.get() == 0:
             self.graph.clear()  # Clear the previous plot
             self.graph.set_xlabel('Distance (mm)')
             self.graph.set_ylabel('Force (N)')
             self.graph.set_title('Force vs Distance')
-            self.graph.set_xlim(0, max(distance), auto=True)
             self.graph.plot(distance, force, color='blue')
             self.graph_canvas.draw()
 
-        elif self.force_time.get() == 1:
+        elif self.force_time.get() == 1 and self.force_distance.get() == 0 and self.distance_time.get() == 0:
             self.graph.clear()  # Clear the previous plot
             self.graph.set_xlabel('Time (s)')
             self.graph.set_ylabel('Force (N)')
-            # set fixed y-axis on the graph
-            self.graph.text(0, 0, 'Force (N)', fontsize=12, ha='center')
             self.graph.set_title('Force vs Time')
             self.graph.plot(time, force, color='blue')
             self.graph_canvas.draw()
 
-        elif self.distance_time.get() == 1:
+        elif self.distance_time.get() == 1 and self.force_distance.get() == 0 and self.force_time.get() == 0:
             self.graph.clear()  # Clear the previous plot
             self.graph.set_xlabel('Time (s)')
             self.graph.set_ylabel('Distance (mm)')
@@ -328,9 +322,9 @@ class ConnGUI(ComGui):
         self.fig = plt.Figure(figsize=(7, 5), dpi=70)
         self.graph = self.fig.add_subplot(111)  # Create subplot once
 
-        self.graph.set_xlabel('Distance (mm)')
-        self.graph.set_ylabel('Force (N)')
-        self.graph.set_title('Force vs Distance')
+        # self.graph.set_xlabel('Distance (mm)')
+        # self.graph.set_ylabel('Force (N)')
+        # self.graph.set_title('Force vs Distance')
 
         self.graph.plot([], [], color='blue')  # Plot empty data initially
 

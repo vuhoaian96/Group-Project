@@ -31,9 +31,9 @@ class SerialCtrl():
             port = self.foundports[i]
             strPort = str(port)
             
-            # if 'Arduino' in strPort:
-            splitPort = strPort.split(' ')
-            self.commPorts = splitPort[0]
+        # if 'Arduino' in strPort:
+        splitPort = strPort.split(' ')
+        self.commPorts = splitPort[0]
 
         return self.commPorts
     
@@ -91,11 +91,11 @@ class SerialCtrl():
                 
                 if gui.received_data:
                     data = gui.received_data.split(',')
-                    a = data[0]
-                    b = data[1]
-                    c = data[2]
-                    gui.distance.append(b) #add incoming distance data into array
+                    a = float(data[0])
+                    b = float(data[1])
+                    c = float(data[2])
                     gui.force.append(a)
+                    gui.distance.append(b) #add incoming distance data into array
                     gui.time.append(c)
                     print(f"Force: {a}, Distance: {b}, Time: {c}")
                     gui.animate(gui.distance, gui.force, gui.time)
