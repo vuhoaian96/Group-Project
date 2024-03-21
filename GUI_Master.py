@@ -146,6 +146,8 @@ class ComGui():
             #self.conn.serial_thread.join()
             self.conn.ConnGUIClose()
             #closing the connection
+            self.serial.ser.write(b'e')
+            self.serial.ser.close()
             self.serial.SerialClose()
             InfoMSg= f"Connection using {self.clicked_com.get()} is now closed"
             messagebox.showinfo("showinfo", InfoMSg)
@@ -156,6 +158,7 @@ class ComGui():
             self.time = []
             self.force = []
             self.distance = []
+            
             
     
 class ConnGUI(ComGui):
@@ -295,6 +298,7 @@ class ConnGUI(ComGui):
             self.graph.set_xlabel('Distance (mm)')
             self.graph.set_ylabel('Force (N)')
             self.graph.set_title('Force vs Distance')
+            self.graph.set_xlim(0, max(distance), auto=True)
             self.graph.plot(distance, force, color='blue')
             self.graph_canvas.draw()
 
